@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Subtitle Translator (Burmese / မြန်မာဘာသာ)</title>
+    <!-- Tailwind CSS CDN for sleek, modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans Myanmar for crisp Burmese Unicode rendering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Myanmar:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans Myanmar', 'sans-serif'],
+                        myanmar: ['Noto Sans Myanmar', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar for smooth dark/light experience */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+        .myanmar-text {
+            font-family: 'Noto Sans Myanmar', 'Inter', sans-serif;
+            line-height: 1.75;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-200 selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight flex items-center gap-2">
+                        <span>AI SRT Translator</span>
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">Burmese / မြန်မာ</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Zero-Backend Direct Gemini REST Client</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" type="button" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Toggle Dark/Light Mode">
+                    <!-- Sun Icon (shown in dark mode) -->
+                    <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <!-- Moon Icon (shown in light mode) -->
+                    <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Prominent Error Alert Banner (Hidden by default, shown immediately on critical errors) -->
+    <div id="criticalErrorBanner" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-800 p-4 shadow-lg">
+            <div class="flex items-start gap-3">
+                <div class="p-2 rounded-xl bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <h3 id="bannerErrorTitle" class="text-sm font-bold text-red-800 dark:text-red-300">API Error</h3>
+                        <button id="dismissBannerBtn" class="text-xs font-medium text-red-600 dark:text-red-400 hover:underline">Dismiss</button>
+                    </div>
+                    <p id="bannerErrorPlain" class="text-sm text-red-700 dark:text-red-200 mt-1"></p>
+                    <pre id="bannerErrorRaw" class="mt-2 p-2.5 rounded-lg bg-red-100/80 dark:bg-red-950 text-xs font-mono text-red-900 dark:text-red-300 overflow-x-auto whitespace-pre-wrap break-all"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Grid: Configuration & File Upload -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column (7 cols): API & Translation Settings -->
+            <section class="lg:col-span-7 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h2 class="text-base font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span>Gemini API & Engine Configuration</span>
+                    </h2>
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                        <span>Get Free API Key</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+
+                <!-- API Key Input Row -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label for="apiKeyInput" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Google Gemini API Key <span class="text-red-500">*</span></label>
+                        <label class="inline-flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+                            <input type="checkbox" id="saveKeyCheckbox" class="rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 bg-slate-100 dark:bg-slate-800">
+                            <span>Remember key in browser (localStorage)</span>
+                        </label>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="apiKeyInput" placeholder="AIzaSy..." autocomplete="off"
+                            class="w-full pl-3.5 pr-11 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        <button type="button" id="toggleKeyVisibility" class="absolute inset-y-0 right-0 px-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" title="Show/Hide API Key">
+                            <svg id="eyeOpenIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <svg id="eyeClosedIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Selector + Batch Controls -->
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                    <!-- Model Dropdown -->
+                    <div class="sm:col-span-6 space-y-1.5">
+                        <label for="modelSelect" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Gemini Model</label>
+                        <select id="modelSelect" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="gemini-2.5-flash" selected>gemini-2.5-flash (Default — Balanced)</option>
+                            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (Fastest / High Quota)</option>
+                            <option value="gemini-2.5-pro">gemini-2.5-pro (Highest Nuance & Reasoning)</option>
+                            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+                            <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                            <option value="custom">-- Custom Model ID --</option>
+                        </select>
+                    </div>
+
+                    <!-- Batch Size -->
+                    <div class="sm:col-span-3 space-y-1.5">
+                        <label for="batchSizeInput" class="block text-sm font-medium text-slate-700 dark:text-slate-300" title="Number of subtitle blocks translated per API request">Batch Size</label>
+                        <input type="number" id="batchSizeInput" value="40" min="1" max="150"
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <!-- Delay Between Batches -->
+                    <div class="sm:col-span-3 space-y-1.5">
+                        <label for="batchDelayInput" class="block text-sm font-medium text-slate-700 dark:text-slate-300" title="Cooldown seconds between requests to prevent 429 rate limits">Delay (sec)</label>
+                        <input type="number" id="batchDelayInput" value="6" min="0" max="120"
+                            class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Optional Custom Model ID Input (Visible only when Custom Model ID is chosen) -->
+                <div id="customModelContainer" class="hidden space-y-1.5">
+                    <label for="customModelInput" class="block text-sm font-medium text-indigo-600 dark:text-indigo-400">Custom Gemini Model ID</label>
+                    <input type="text" id="customModelInput" placeholder="e.g., gemini-3-flash-preview or gemini-2.5-flash-preview-05-20"
+                        class="w-full px-3.5 py-2 rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/40 dark:bg-indigo-950/30 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Quick Translation Style / Tone Presets (No typing required!) -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            ဘာသာပြန် လေသံ ရွေးချယ်ရန် (Translation Tone Presets)
+                        </label>
+                        <span id="activePresetBadge" class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            ရုပ်ရှင် / ဇာတ်လမ်းတွဲ
+                        </span>
+                    </div>
+                    <div id="tonePresetsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <button type="button" data-preset="movie" class="preset-btn text-left p-2.5 rounded-xl border-2 border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">🎬 ရုပ်ရှင် / ဇာတ်လမ်းတွဲ</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">သဘာဝကျကျ စကားပြောဟန်</div>
+                        </button>
+
+                        <button type="button" data-preset="youth" class="preset-btn text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 hover:border-indigo-400 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">😎 လူငယ်ချင်း ပေါ့ပေါ့ပါးပါး</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">သူငယ်ချင်းစကားပြော / ဗန်းစကား</div>
+                        </button>
+
+                        <button type="button" data-preset="documentary" class="preset-btn text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 hover:border-indigo-400 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">🎓 Documentary / ပညာရေး</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">တရားဝင် / ဟောပြောပွဲ အသုံးအနှုန်း</div>
+                        </button>
+
+                        <button type="button" data-preset="historical" class="preset-btn text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 hover:border-indigo-400 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">⚔️ ရှေးဟောင်း / နန်းတွင်း / သမိုင်း</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">ခန့်ညားသော ရှေးခေတ်စကားဟန်</div>
+                        </button>
+
+                        <button type="button" data-preset="comedy" class="preset-btn text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 hover:border-indigo-400 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">😂 ဟာသ / Variety Show</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">သွက်လက်ရယ်မောဖွယ် အသုံးအနှုန်း</div>
+                        </button>
+
+                        <button type="button" data-preset="anime" class="preset-btn text-left p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 hover:border-indigo-400 transition">
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white myanmar-text">⚡ Anime / Action / Fantasy</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 myanmar-text mt-0.5">အားမာန်ပါပြီး စိတ်လှုပ်ရှားဖွယ်</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Context / Glossary Textarea -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <label for="glossaryInput" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            အသေးစိတ် ညွှန်ကြားချက်နှင့် ဇာတ်ကောင်အမည်များ <span class="text-xs font-normal text-slate-400">(ပြင်ဆင်နိုင်သည် / Optional)</span>
+                        </label>
+                        <button type="button" id="clearGlossaryBtn" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Clear</button>
+                    </div>
+                    <textarea id="glossaryInput" rows="3" placeholder="အပေါ်မှ Preset တစ်ခုခုကို နှိပ်ရွေးနိုင်သလို ဇာတ်ကောင်နာမည်များ (ဥပမာ - Min Thu = မင်းသူ) ထပ်ဖြည့်ရေးနိုင်ပါသည်။"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-sm myanmar-text focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+            </section>
+
+            <!-- Right Column (5 cols): Upload, Progress & Action Controls -->
+            <section class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-5">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h2 class="text-base font-semibold flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <span>Subtitle File (.SRT)</span>
+                        </h2>
+                        <label class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none" title="Adds UTF-8 Byte Order Mark so older Windows players and VLC auto-detect Burmese Unicode">
+                            <input type="checkbox" id="utf8BomCheckbox" checked class="rounded border-slate-300 dark:border-slate-700 text-emerald-600 focus:ring-emerald-500">
+                            <span>UTF-8 BOM</span>
+                        </label>
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="dropZone" class="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50/70 dark:bg-slate-800/40 group">
+                        <input type="file" id="srtFileInput" accept=".srt,text/plain" class="hidden">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <p class="text-sm font-medium text-slate-700 dark:text-slate-200">Click to browse or drag & drop <span class="text-indigo-600 dark:text-indigo-400 font-semibold">.srt</span> file</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">UTF-8 encoded subtitle files supported</p>
+                    </div>
+
+                    <!-- File Info Card (Hidden until file loaded) -->
+                    <div id="fileInfoCard" class="hidden rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 p-3.5 flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p id="fileNameDisplay" class="text-sm font-semibold truncate text-slate-800 dark:text-slate-100">movie.srt</p>
+                            <p id="blockCountDisplay" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">0 subtitle blocks detected</p>
+                        </div>
+                        <span id="batchCountBadge" class="shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">0 Batches</span>
+                    </div>
+
+                    <!-- Live Progress Bar & Countdown Status -->
+                    <div class="space-y-2 pt-1">
+                        <div class="flex items-center justify-between text-xs font-medium">
+                            <span id="progressStatusLabel" class="text-slate-600 dark:text-slate-300">Ready to start</span>
+                            <span id="progressPercentLabel" class="text-indigo-600 dark:text-indigo-400 font-semibold">0% (0 / 0)</span>
+                        </div>
+                        <div class="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                            <div id="progressBarFill" class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <!-- Live Rate-Limit / Retry Countdown Pill -->
+                        <div id="countdownBanner" class="hidden items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200">
+                            <span id="countdownMessage" class="font-medium flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                                <span>Cooling down before next batch...</span>
+                            </span>
+                            <span id="countdownTimer" class="font-mono font-bold text-sm">6s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-2.5 pt-2">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button id="startBtn" type="button" disabled
+                            class="col-span-2 sm:col-span-1 py-3 px-4 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-indigo-500/20 transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                            <span id="startBtnText">Start Translation</span>
+                        </button>
+
+                        <button id="pauseResumeBtn" type="button" disabled
+                            class="col-span-2 sm:col-span-1 py-3 px-4 rounded-xl font-semibold text-sm border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            <span id="pauseResumeBtnText">Pause</span>
+                        </button>
+                    </div>
+
+                    <button id="downloadBtn" type="button" disabled
+                        class="w-full py-3 px-4 rounded-xl font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span>Download Translated .SRT</span>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Status & Error Console Log Panel -->
+        <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-semibold flex items-center gap-2 text-slate-700 dark:text-slate-200">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Live Status & Diagnostic Log</span>
+                </h2>
+                <button id="clearLogBtn" type="button" class="text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">Clear Logs</button>
+            </div>
+            <div id="logConsole" class="h-40 overflow-y-auto rounded-xl bg-slate-950 text-slate-200 p-3.5 font-mono text-xs space-y-2 border border-slate-800">
+                <div class="flex items-start gap-2">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-900/80 text-sky-300 border border-sky-700 shrink-0">INFO</span>
+                    <span class="text-slate-400">[System]</span>
+                    <span>Application initialized. Enter your Gemini API key and upload an .srt file to begin.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Side-by-Side Live Subtitle Preview & Inline Editor -->
+        <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                        <span>Side-by-Side Live Subtitle Preview</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Click any Burmese subtitle box to manually edit before exporting.</p>
+                </div>
+
+                <!-- Filter / Search Controls -->
+                <div class="flex items-center gap-2">
+                    <select id="filterSelect" class="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all">Show All Blocks</option>
+                        <option value="translated">Translated Only</option>
+                        <option value="pending">Pending / Untranslated</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Responsive Table Container -->
+            <div class="max-h-[620px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 z-10 bg-slate-100 dark:bg-slate-800/95 backdrop-blur border-b border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        <tr>
+                            <th class="py-3 px-4 w-20"># / Time</th>
+                            <th class="py-3 px-4 w-1/2">Original Dialogue</th>
+                            <th class="py-3 px-4 w-1/2">Burmese Translation (မြန်မာဘာသာပြန် - Editable)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subtitleTableBody" class="divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+                        <tr>
+                            <td colspan="3" class="py-16 text-center text-slate-400 dark:text-slate-500">
+                                No subtitle file loaded yet. Upload an <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800">.srt</code> file above to inspect and translate.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Application Logic -->
+    <script>
+        /**
+         * ============================================================================
+         * AI SUBTITLE TRANSLATOR (BURMESE) - ZERO-BACKEND ARCHITECTURE
+         * ============================================================================
+         * Pure Vanilla JavaScript client interacting directly with Google Gemini REST API.
+         * Guarantees 100% SRT block & timestamp preservation via structured JSON schema.
+         */
+
+        // --- Curated Burmese Translation Tone Presets ---
+        const TONE_PRESETS = {
+            movie: {
+                badge: 'ရုပ်ရှင် / ဇာတ်လမ်းတွဲ',
+                prompt: `Genre & Tone: Natural Movie / TV Drama Dialogue (ရုပ်ရှင်နှင့် ဇာတ်လမ်းတွဲ စကားပြောဟန်).
+- Translate into natural, emotionally resonant spoken Burmese (စကားပြောဟန် — ending with တယ်၊ ပြီ၊ လား၊ နော်၊ ဗျာ၊ ရှင့်).
+- Adapt pronouns naturally based on context (ကျွန်တော်/ကျွန်မ for polite/workplace, ငါ/မင်း or ငါ/နင် for close friends/family, အစ်ကို/အစ်မ/ညီလေး/ညီမလေး where culturally natural).
+- Avoid stiff word-for-word translation; make it sound like real Burmese actors speaking naturally.`
+            },
+            youth: {
+                badge: 'လူငယ်ချင်း ပေါ့ပေါ့ပါးပါး',
+                prompt: `Genre & Tone: Casual Youth / Friends Conversation (လူငယ်ချင်း ပေါ့ပေါ့ပါးပါး ပြောဟန်).
+- Use relaxed, modern everyday Burmese youth speech and natural slang (e.g., ငါ/မင်း, ငါ/နင်, ဟေ့ကောင်, အေးဆေးပဲ, မိုက်တယ်, ဘာတွေဖြစ်နေတာလဲကွာ).
+- Keep sentences punchy, informal, and lively—never overly polite or textbook formal.`
+            },
+            documentary: {
+                badge: 'Documentary / ပညာရေး',
+                prompt: `Genre & Tone: Documentary, Educational & Literary Talks (Documentary / ပညာရေး / စာပေဟောပြောပွဲ).
+- Use clear, respectful, accurate, and articulate Burmese suitable for documentaries, lectures, science/history explainers, and formal talks.
+- Use refined narration style (စာဟန်/ယဉ်ကျေးသော ရှင်းလင်းပြောကြားဟန် — e.g., ဖြစ်ပါသည်၊ တွေ့ရှိရသည်၊ လေ့လာကြည့်မည်ဆိုလျှင်) for narrators, and polite respectful speech (ကျွန်တော်/ကျွန်မ၊ ခင်ဗျား/ရှင်) for interviewees.
+- Keep technical, scientific, and educational terms accurate and easy to understand.`
+            },
+            historical: {
+                badge: 'ရှေးဟောင်း / နန်းတွင်း / သမိုင်း',
+                prompt: `Genre & Tone: Historical, Period Drama & Royal Palace (ရှေးဟောင်း / နန်းတွင်း / သမိုင်းဇာတ်လမ်း).
+- Use dignified, classical Burmese period dialogue (နန်းတွင်းနှင့် ရှေးခေတ် စကားအသုံးအနှုန်း — e.g., အရှင်မင်းကြီး၊ ကျွန်တော်မျိုး၊ ကျွန်မမျိုး၊ မောင်မင်း၊ သင်၊ နှမတော်၊ နောင်တော်).
+- Maintain a grand, respectful, and dramatic tone fitting ancient or historical settings.`
+            },
+            comedy: {
+                badge: 'ဟာသ / Variety Show',
+                prompt: `Genre & Tone: Comedy, Sitcom & Variety Show (ဟာသနှင့် ဖျော်ဖြေရေး အစီအစဉ်).
+- Prioritize humor, witty punchlines, expressive exclamations, and lively conversational Burmese (e.g., ဟာကွာ၊ အမလေး၊ သေပါပြီ၊ ဘယ်လိုကြီးလဲဟ).
+- Adapt jokes and sarcasm culturally so they feel genuinely funny to a Burmese audience.`
+            },
+            anime: {
+                badge: 'Anime / Action / Fantasy',
+                prompt: `Genre & Tone: Anime, Action & Fantasy (Anime / အက်ရှင် / စိတ်ကူးယဉ်).
+- Use energetic, bold, and expressive Burmese dialogue suited for dramatic battles, hero speeches, and intense emotions (e.g., ငါတို့ လုပ်နိုင်တယ်၊ ဘယ်တော့မှ အရှုံးမပေးဘူး၊ သတိထား).
+- Keep attack names, fantasy terms, and character dynamics consistent and impactful.`
+            }
+        };
+
+        // --- Application State ---
+        const state = {
+            fileName: '',
+            selectedPresetKey: 'movie',
+            blocks: [], // Array of { id: number, indexStr: string, timestamp: string, originalText: string, translatedText: string, status: 'pending' | 'translating' | 'done' | 'error' }
+            isRunning: false,
+            isPaused: false,
+            abortController: null,
+            activeTimerId: null
+        };
+
+        // --- DOM Element References ---
+        const els = {
+            themeToggle: document.getElementById('themeToggle'),
+            apiKeyInput: document.getElementById('apiKeyInput'),
+            saveKeyCheckbox: document.getElementById('saveKeyCheckbox'),
+            toggleKeyVisibility: document.getElementById('toggleKeyVisibility'),
+            eyeOpenIcon: document.getElementById('eyeOpenIcon'),
+            eyeClosedIcon: document.getElementById('eyeClosedIcon'),
+            modelSelect: document.getElementById('modelSelect'),
+            customModelContainer: document.getElementById('customModelContainer'),
+            customModelInput: document.getElementById('customModelInput'),
+            batchSizeInput: document.getElementById('batchSizeInput'),
+            batchDelayInput: document.getElementById('batchDelayInput'),
+            activePresetBadge: document.getElementById('activePresetBadge'),
+            tonePresetsGrid: document.getElementById('tonePresetsGrid'),
+            clearGlossaryBtn: document.getElementById('clearGlossaryBtn'),
+            glossaryInput: document.getElementById('glossaryInput'),
+            utf8BomCheckbox: document.getElementById('utf8BomCheckbox'),
+            dropZone: document.getElementById('dropZone'),
+            srtFileInput: document.getElementById('srtFileInput'),
+            fileInfoCard: document.getElementById('fileInfoCard'),
+            fileNameDisplay: document.getElementById('fileNameDisplay'),
+            blockCountDisplay: document.getElementById('blockCountDisplay'),
+            batchCountBadge: document.getElementById('batchCountBadge'),
+            progressStatusLabel: document.getElementById('progressStatusLabel'),
+            progressPercentLabel: document.getElementById('progressPercentLabel'),
+            progressBarFill: document.getElementById('progressBarFill'),
+            countdownBanner: document.getElementById('countdownBanner'),
+            countdownMessage: document.getElementById('countdownMessage'),
+            countdownTimer: document.getElementById('countdownTimer'),
+            startBtn: document.getElementById('startBtn'),
+            startBtnText: document.getElementById('startBtnText'),
+            pauseResumeBtn: document.getElementById('pauseResumeBtn'),
+            pauseResumeBtnText: document.getElementById('pauseResumeBtnText'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            logConsole: document.getElementById('logConsole'),
+            clearLogBtn: document.getElementById('clearLogBtn'),
+            filterSelect: document.getElementById('filterSelect'),
+            subtitleTableBody: document.getElementById('subtitleTableBody'),
+            criticalErrorBanner: document.getElementById('criticalErrorBanner'),
+            bannerErrorTitle: document.getElementById('bannerErrorTitle'),
+            bannerErrorPlain: document.getElementById('bannerErrorPlain'),
+            bannerErrorRaw: document.getElementById('bannerErrorRaw'),
+            dismissBannerBtn: document.getElementById('dismissBannerBtn')
+        };
+
+        // --- Initialization ---
+        function init() {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('srt_translator_theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+
+            // Load saved API key if user opted in
+            const savedKey = localStorage.getItem('gemini_srt_api_key');
+            if (savedKey) {
+                els.apiKeyInput.value = savedKey;
+                els.saveKeyCheckbox.checked = true;
+            }
+
+            // Apply default Movie/Drama preset into glossary textarea
+            applyTonePreset('movie', false);
+
+            bindEvents();
+        }
+
+        /**
+         * Applies one of the built-in Burmese tone presets into the glossary box and highlights the active card.
+         */
+        function applyTonePreset(presetKey, shouldLog = true) {
+            const preset = TONE_PRESETS[presetKey];
+            if (!preset) return;
+
+            state.selectedPresetKey = presetKey;
+            els.activePresetBadge.textContent = preset.badge;
+            els.glossaryInput.value = preset.prompt;
+
+            // Update visual active state on preset buttons
+            const buttons = els.tonePresetsGrid.querySelectorAll('.preset-btn');
+            buttons.forEach(btn => {
+                const isSelected = btn.getAttribute('data-preset') === presetKey;
+                if (isSelected) {
+                    btn.classList.remove('border', 'border-slate-200', 'dark:border-slate-700', 'bg-slate-50/70', 'dark:bg-slate-800/50');
+                    btn.classList.add('border-2', 'border-indigo-500', 'bg-indigo-50/60', 'dark:bg-indigo-950/40');
+                } else {
+                    btn.classList.remove('border-2', 'border-indigo-500', 'bg-indigo-50/60', 'dark:bg-indigo-950/40');
+                    btn.classList.add('border', 'border-slate-200', 'dark:border-slate-700', 'bg-slate-50/70', 'dark:bg-slate-800/50');
+                }
+            });
+
+            if (shouldLog) {
+                logMessage('INFO', `Translation tone preset switched to: "${preset.badge}".`);
+            }
+        }
+
+        // --- Event Bindings ---
+        function bindEvents() {
+            // Theme toggle
+            els.themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('srt_translator_theme', isDark ? 'dark' : 'light');
+            });
+
+            // Tone preset buttons
+            els.tonePresetsGrid.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.getAttribute('data-preset');
+                    applyTonePreset(key, true);
+                });
+            });
+
+            // Clear glossary button
+            els.clearGlossaryBtn.addEventListener('click', () => {
+                els.glossaryInput.value = '';
+                els.activePresetBadge.textContent = 'Custom / Empty';
+            });
+
+            // API Key show/hide
+            els.toggleKeyVisibility.addEventListener('click', () => {
+                const isPassword = els.apiKeyInput.type === 'password';
+                els.apiKeyInput.type = isPassword ? 'text' : 'password';
+                els.eyeOpenIcon.classList.toggle('hidden', isPassword);
+                els.eyeClosedIcon.classList.toggle('hidden', !isPassword);
+            });
+
+            // Save API key preference
+            const syncApiKeyStorage = () => {
+                if (els.saveKeyCheckbox.checked && els.apiKeyInput.value.trim()) {
+                    localStorage.setItem('gemini_srt_api_key', els.apiKeyInput.value.trim());
+                } else {
+                    localStorage.removeItem('gemini_srt_api_key');
+                }
+            };
+            els.saveKeyCheckbox.addEventListener('change', syncApiKeyStorage);
+            els.apiKeyInput.addEventListener('input', syncApiKeyStorage);
+
+            // Custom Model ID toggle
+            els.modelSelect.addEventListener('change', () => {
+                const isCustom = els.modelSelect.value === 'custom';
+                els.customModelContainer.classList.toggle('hidden', !isCustom);
+                if (isCustom) els.customModelInput.focus();
+            });
+
+            // Update batch badge when batch size changes
+            els.batchSizeInput.addEventListener('input', updateFileStatsUI);
+
+            // Drag and drop file handling
+            els.dropZone.addEventListener('click', () => els.srtFileInput.click());
+            els.dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                els.dropZone.classList.add('border-indigo-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/30');
+            });
+            els.dropZone.addEventListener('dragleave', () => {
+                els.dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/30');
+            });
+            els.dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                els.dropZone.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'dark:bg-indigo-950/30');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleFileUpload(e.dataTransfer.files[0]);
+                }
+            });
+            els.srtFileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    handleFileUpload(e.target.files[0]);
+                }
+            });
+
+            // Primary Action Buttons
+            els.startBtn.addEventListener('click', startOrRestartTranslation);
+            els.pauseResumeBtn.addEventListener('click', togglePauseResume);
+            els.downloadBtn.addEventListener('click', exportTranslatedSrt);
+
+            // Log & Banner controls
+            els.clearLogBtn.addEventListener('click', () => {
+                els.logConsole.innerHTML = '';
+                logMessage('INFO', 'Console cleared.');
+            });
+            els.dismissBannerBtn.addEventListener('click', () => {
+                els.criticalErrorBanner.classList.add('hidden');
+            });
+
+            // Table filter
+            els.filterSelect.addEventListener('change', renderSubtitleTable);
+        }
+
+        // ============================================================================
+        // 1. STRICT SRT PARSER & SERIALIZER
+        // ============================================================================
+
+        /**
+         * Parses raw SRT file content into structured block objects.
+         * Handles \r\n and \n line endings cleanly without corrupting multi-line dialogue.
+         */
+        function parseSrtContent(rawText) {
+            // Strip UTF-8 BOM if present and normalize line endings to \n
+            const normalized = rawText.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+            if (!normalized) return [];
+
+            // Split blocks separated by one or more blank lines
+            const rawBlocks = normalized.split(/\n{2,}/);
+            const parsedBlocks = [];
+
+            // Regex to match SRT timestamp line: 00:01:23,450 --> 00:01:26,100 (also tolerates dot milliseconds)
+            const timestampRegex = /^(\d{1,2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[,.]\d{3})(.*)$/;
+
+            for (let i = 0; i < rawBlocks.length; i++) {
+                const lines = rawBlocks[i].split('\n');
+                if (lines.length < 2) continue;
+
+                // Find which line holds the timestamp (usually index 1, sometimes index 0 if index number missing)
+                let tsLineIdx = -1;
+                for (let j = 0; j < Math.min(lines.length, 3); j++) {
+                    if (timestampRegex.test(lines[j].trim())) {
+                        tsLineIdx = j;
+                        break;
+                    }
+                }
+
+                if (tsLineIdx === -1) continue; // Skip malformed non-subtitle blocks
+
+                const indexStr = tsLineIdx > 0 ? lines[tsLineIdx - 1].trim() : String(parsedBlocks.length + 1);
+                const timestamp = lines[tsLineIdx].trim();
+                const textLines = lines.slice(tsLineIdx + 1);
+                const originalText = textLines.join('\n').trim();
+
+                parsedBlocks.push({
+                    id: parsedBlocks.length + 1, // Internal sequential 1-based ID for strict JSON mapping
+                    indexStr: indexStr,
+                    timestamp: timestamp,
+                    originalText: originalText,
+                    translatedText: '',
+                    status: 'pending'
+                });
+            }
+
+            return parsedBlocks;
+        }
+
+        /**
+         * Handles reading and parsing the uploaded .srt file.
+         */
+        function handleFileUpload(file) {
+            if (state.isRunning) {
+                showBannerError('Translation In Progress', 'Please pause or wait for the current translation to stop before loading a new file.', '');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const content = event.target.result;
+                    const blocks = parseSrtContent(content);
+
+                    if (blocks.length === 0) {
+                        logMessage('ERROR', `Failed to parse "${file.name}". No valid SRT timestamp blocks were found.`);
+                        showBannerError('Invalid SRT File', 'No valid subtitle blocks (index + timestamp + text) were detected in this file.', `File: ${file.name}`);
+                        return;
+                    }
+
+                    state.fileName = file.name;
+                    state.blocks = blocks;
+                    state.isPaused = false;
+
+                    els.criticalErrorBanner.classList.add('hidden');
+                    els.fileInfoCard.classList.remove('hidden');
+                    els.fileNameDisplay.textContent = file.name;
+                    els.startBtn.disabled = false;
+                    els.startBtnText.textContent = 'Start Translation';
+                    els.pauseResumeBtn.disabled = true;
+                    els.downloadBtn.disabled = false; // Enabled immediately so user can test/export anytime
+
+                    updateFileStatsUI();
+                    updateProgressUI();
+                    renderSubtitleTable();
+
+                    logMessage('SUCCESS', `Loaded "${file.name}" successfully: ${blocks.length} subtitle blocks detected.`);
+                } catch (err) {
+                    logMessage('ERROR', `File read error: ${err.message}`);
+                }
+            };
+            reader.onerror = () => {
+                logMessage('ERROR', 'Unable to read the selected file from disk.');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // ============================================================================
+        // 2. GEMINI REST API CLIENT WITH STRUCTURED OUTPUT & AUTO-RETRY
+        // ============================================================================
+
+        function getSelectedModel() {
+            if (els.modelSelect.value === 'custom') {
+                return els.customModelInput.value.trim() || 'gemini-2.5-flash';
+            }
+            return els.modelSelect.value;
+        }
+
+        /**
+         * Builds the System Instruction tailored for natural, conversational Burmese movie subtitles.
+         */
+        function buildSystemInstruction() {
+            const glossary = els.glossaryInput.value.trim();
+            let instruction = `You are an expert native Burmese (Myanmar) video and movie subtitle translator.
+Your task is to translate the provided JSON array of subtitle items from their source language into natural, accurate, idiomatic Burmese (မြန်မာဘာသာ) suitable for on-screen subtitles.
+
+STRICT RULES:
+1. FOLLOW TONE & STYLE INSTRUCTIONS: Strictly follow the selected Style/Tone and Glossary guidelines provided below (whether casual youth speech, natural movie dialogue, formal documentary/educational narration, or period drama).
+2. CONCISE SUBTITLE PACING: Keep translations concise and readable on screen without losing emotional subtext, humor, or key meaning.
+3. PRESERVE FORMATTING & LINE BREAKS: Keep existing line breaks (\\n) and HTML/SSA tags (such as <i>, </i>, <b>, </b>, {\\an8}) intact in their proper positions.
+4. EXACT ID & COUNT MATCHING: Return a JSON array where every object has the exact same integer "id" and its translated Burmese "text". Never merge, split, skip, or reorder subtitle IDs.`;
+
+            if (glossary) {
+                instruction += `\n\nSELECTED TONE, CONTEXT & CHARACTER GLOSSARY:\n${glossary}`;
+            }
+            return instruction;
+        }
+
+        /**
+         * Calls Google Gemini generateContent REST API directly with structured JSON schema.
+         */
+        async function translateBatchWithGemini(batchItems, apiKey, modelName, signal) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            const inputPayload = batchItems.map(b => ({
+                id: b.id,
+                text: b.originalText
+            }));
+
+            const requestBody = {
+                systemInstruction: {
+                    parts: [{ text: buildSystemInstruction() }]
+                },
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            {
+                                text: `Translate the following ${inputPayload.length} subtitle lines into Burmese:\n${JSON.stringify(inputPayload)}`
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.3,
+                    responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: 'ARRAY',
+                        description: 'Translated Burmese subtitle items matching input IDs exactly.',
+                        items: {
+                            type: 'OBJECT',
+                            properties: {
+                                id: {
+                                    type: 'INTEGER',
+                                    description: 'Exact matching subtitle block ID from input.'
+                                },
+                                text: {
+                                    type: 'STRING',
+                                    description: 'Natural Burmese translation preserving line breaks and formatting tags.'
+                                }
+                            },
+                            required: ['id', 'text']
+                        }
+                    }
+                }
+            };
+
+            let response;
+            try {
+                response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody),
+                    signal: signal
+                });
+            } catch (networkErr) {
+                if (networkErr.name === 'AbortError') {
+                    throw networkErr;
+                }
+                const err = new Error('Network / CORS Connection Failure');
+                err.statusCode = 'NETWORK';
+                err.plainExplanation = 'Could not reach Google Gemini servers. Check your internet connection, firewall, or VPN status.';
+                err.rawMessage = networkErr.message;
+                throw err;
+            }
+
+            if (!response.ok) {
+                let rawErrorText = '';
+                try {
+                    const errJson = await response.json();
+                    rawErrorText = JSON.stringify(errJson, null, 2);
+                } catch {
+                    rawErrorText = await response.text();
+                }
+
+                const err = new Error(`HTTP ${response.status}`);
+                err.statusCode = response.status;
+                err.rawMessage = rawErrorText;
+
+                // Map exact HTTP status codes to clear plain-English explanations
+                switch (response.status) {
+                    case 400:
+                        err.plainExplanation = 'Invalid Request or Malformed API Key (HTTP 400). Double-check that your Gemini API key has no extra spaces and the selected model ID is valid.';
+                        break;
+                    case 403:
+                        err.plainExplanation = 'Access Denied / Region Blocked (HTTP 403). Your API key may lack permissions, or Gemini API is geo-restricted in your current network region (try enabling a VPN).';
+                        break;
+                    case 404:
+                        err.plainExplanation = `Model "${modelName}" Not Found (HTTP 404). This model may have been deprecated or typed incorrectly.`;
+                        break;
+                    case 429:
+                        err.plainExplanation = 'Rate Limit or Quota Exceeded (HTTP 429). You have hit Gemini free-tier RPM/TPM limits. Increase "Delay (sec)", reduce "Batch Size", or switch to gemini-2.5-flash-lite.';
+                        break;
+                    case 500:
+                    case 503:
+                        err.plainExplanation = `Google Gemini Server Overloaded / Unavailable (HTTP ${response.status}). Temporary server capacity issue on Google's end.`;
+                        break;
+                    default:
+                        err.plainExplanation = `Unexpected API Error (HTTP ${response.status}). Inspect the raw server response below for details.`;
+                }
+                throw err;
+            }
+
+            const data = await response.json();
+            const candidate = data?.candidates?.[0];
+
+            // Handle safety blocks or empty candidates
+            if (!candidate || !candidate.content?.parts?.[0]?.text) {
+                const finishReason = candidate?.finishReason || 'UNKNOWN';
+                const err = new Error(`Empty response from Gemini (finishReason: ${finishReason})`);
+                err.statusCode = 'SAFETY/EMPTY';
+                err.plainExplanation = `Gemini returned no translation text (Finish Reason: ${finishReason}). Try reducing Batch Size to isolate sensitive dialogue lines.`;
+                err.rawMessage = JSON.stringify(data, null, 2);
+                throw err;
+            }
+
+            const rawJsonOutput = candidate.content.parts[0].text;
+            let parsedArray;
+            try {
+                parsedArray = JSON.parse(rawJsonOutput);
+            } catch (jsonErr) {
+                const err = new Error('JSON Parse Error on Gemini Response');
+                err.statusCode = 'PARSE_ERR';
+                err.plainExplanation = 'Gemini returned malformed JSON. Try reducing Batch Size slightly.';
+                err.rawMessage = rawJsonOutput;
+                throw err;
+            }
+
+            if (!Array.isArray(parsedArray)) {
+                const err = new Error('Invalid Schema Structure');
+                err.statusCode = 'SCHEMA_ERR';
+                err.plainExplanation = 'Expected a JSON array of translated subtitle blocks.';
+                err.rawMessage = rawJsonOutput;
+                throw err;
+            }
+
+            return parsedArray;
+        }
+
+        // ============================================================================
+        // 3. TRANSLATION ORCHESTRATOR, RATE-LIMITING & AUTO-RETRY LOOP
+        // ============================================================================
+
+        async function startOrRestartTranslation() {
+            const apiKey = els.apiKeyInput.value.trim();
+            if (!apiKey) {
+                showBannerError('Missing Gemini API Key', 'Please paste your Google Gemini API key before starting translation.', 'API key field is empty.');
+                els.apiKeyInput.focus();
+                return;
+            }
+
+            if (state.blocks.length === 0) {
+                showBannerError('No Subtitle File', 'Please upload a valid .srt file first.', '');
+                return;
+            }
+
+            // If all blocks are already done and user clicks "Translate Again", reset blocks
+            const pendingCount = state.blocks.filter(b => b.status !== 'done').length;
+            if (pendingCount === 0) {
+                state.blocks.forEach(b => {
+                    b.translatedText = '';
+                    b.status = 'pending';
+                });
+                renderSubtitleTable();
+            }
+
+            els.criticalErrorBanner.classList.add('hidden');
+            state.isRunning = true;
+            state.isPaused = false;
+            updateControlButtonsState();
+
+            await runTranslationLoop();
+        }
+
+        function togglePauseResume() {
+            if (!state.isRunning && !state.isPaused) return;
+
+            if (!state.isPaused) {
+                // Pause requested
+                state.isPaused = true;
+                state.isRunning = false;
+                if (state.abortController) {
+                    state.abortController.abort();
+                }
+                clearCountdown();
+                logMessage('WARNING', 'Translation paused by user. Progress is safely preserved.');
+                els.progressStatusLabel.textContent = 'Paused — Click Resume to continue';
+                updateControlButtonsState();
+            } else {
+                // Resume requested
+                els.criticalErrorBanner.classList.add('hidden');
+                state.isPaused = false;
+                state.isRunning = true;
+                logMessage('INFO', 'Resuming translation from remaining untranslated blocks...');
+                updateControlButtonsState();
+                runTranslationLoop();
+            }
+        }
+
+        /**
+         * Main batch processing loop with rate-limit cooldowns and 3x exponential backoff on 429/503.
+         */
+        async function runTranslationLoop() {
+            const apiKey = els.apiKeyInput.value.trim();
+            const modelName = getSelectedModel();
+            const batchSize = Math.max(1, Math.min(150, parseInt(els.batchSizeInput.value, 10) || 40));
+            const delaySeconds = Math.max(0, parseInt(els.batchDelayInput.value, 10) || 0);
+
+            logMessage('INFO', `Starting batch engine using model "${modelName}" (Batch Size: ${batchSize}, Delay: ${delaySeconds}s).`);
+
+            while (state.isRunning && !state.isPaused) {
+                // Find next contiguous chunk of untranslated blocks
+                const pendingBlocks = state.blocks.filter(b => b.status !== 'done');
+                if (pendingBlocks.length === 0) {
+                    // All blocks finished!
+                    state.isRunning = false;
+                    state.isPaused = false;
+                    clearCountdown();
+                    els.progressStatusLabel.textContent = 'Translation Complete!';
+                    updateControlButtonsState();
+                    logMessage('SUCCESS', `All ${state.blocks.length} subtitle blocks translated into Burmese! Ready to download.`);
+                    return;
+                }
+
+                const currentBatch = pendingBlocks.slice(0, batchSize);
+                const firstId = currentBatch[0].id;
+                const lastId = currentBatch[currentBatch.length - 1].id;
+
+                // Mark current batch as translating in UI
+                currentBatch.forEach(b => b.status = 'translating');
+                renderSubtitleTable();
+                els.progressStatusLabel.textContent = `Translating blocks #${firstId} – #${lastId}...`;
+
+                let attempt = 0;
+                const maxRetries = 3;
+                let batchSucceeded = false;
+
+                while (attempt <= maxRetries && state.isRunning && !state.isPaused) {
+                    state.abortController = new AbortController();
+
+                    try {
+                        if (attempt === 0) {
+                            logMessage('INFO', `Sending batch #${firstId}–#${lastId} (${currentBatch.length} blocks) to ${modelName}...`);
+                        } else {
+                            logMessage('WARNING', `Retry attempt ${attempt}/${maxRetries} for batch #${firstId}–#${lastId}...`);
+                        }
+
+                        const translatedResults = await translateBatchWithGemini(
+                            currentBatch,
+                            apiKey,
+                            modelName,
+                            state.abortController.signal
+                        );
+
+                        // Map results back strictly by ID
+                        const resultMap = new Map();
+                        translatedResults.forEach(item => {
+                            if (item && typeof item.id === 'number' && typeof item.text === 'string') {
+                                resultMap.set(item.id, item.text);
+                            }
+                        });
+
+                        let matchedCount = 0;
+                        currentBatch.forEach(block => {
+                            if (resultMap.has(block.id)) {
+                                block.translatedText = resultMap.get(block.id).trim();
+                                block.status = 'done';
+                                matchedCount++;
+                            } else {
+                                // Leave any missing ID as pending so next loop iteration picks it up cleanly
+                                block.status = 'pending';
+                            }
+                        });
+
+                        updateProgressUI();
+                        renderSubtitleTable();
+                        logMessage('SUCCESS', `Batch #${firstId}–#${lastId} complete (${matchedCount}/${currentBatch.length} blocks matched).`);
+                        batchSucceeded = true;
+                        break;
+
+                    } catch (error) {
+                        // Ignore user-triggered pause aborts
+                        if (error.name === 'AbortError') {
+                            currentBatch.forEach(b => {
+                                if (b.status === 'translating') b.status = 'pending';
+                            });
+                            renderSubtitleTable();
+                            return;
+                        }
+
+                        const isRetryable = error.statusCode === 429 || error.statusCode === 503 || error.statusCode === 500;
+
+                        if (isRetryable && attempt < maxRetries) {
+                            attempt++;
+                            // Backoff schedule: 30s -> 60s -> 90s
+                            const backoffSec = attempt * 30;
+                            logMessage('WARNING', `[HTTP ${error.statusCode}] Rate limit or server overload. Auto-retrying in ${backoffSec}s (Attempt ${attempt}/${maxRetries})...`);
+                            els.progressStatusLabel.textContent = `Rate limit hit (${error.statusCode}). Waiting ${backoffSec}s before retry...`;
+
+                            const completedWait = await sleepWithCountdown(backoffSec, `Rate limit (${error.statusCode}) backoff — retry ${attempt}/${maxRetries} in`);
+                            if (!completedWait) return; // Paused during countdown
+                        } else {
+                            // Fatal error or max retries exhausted -> Pause safely without losing progress
+                            currentBatch.forEach(b => b.status = 'error');
+                            renderSubtitleTable();
+
+                            state.isRunning = false;
+                            state.isPaused = true;
+                            updateControlButtonsState();
+
+                            const title = `Translation Paused — Error (${error.statusCode || 'API'})`;
+                            const plain = error.plainExplanation || error.message;
+                            const raw = error.rawMessage || error.message;
+
+                            logMessage('ERROR', `${title}: ${plain}`);
+                            showBannerError(title, plain, raw);
+                            els.progressStatusLabel.textContent = 'Paused due to API error — Fix issue & click Resume';
+                            return;
+                        }
+                    }
+                }
+
+                // Check if more blocks remain and apply user-configured Rate Limit Delay
+                const remainingAfterBatch = state.blocks.filter(b => b.status !== 'done').length;
+                if (batchSucceeded && remainingAfterBatch > 0 && delaySeconds > 0 && state.isRunning && !state.isPaused) {
+                    els.progressStatusLabel.textContent = `Rate-limit cooldown (${delaySeconds}s) before next batch...`;
+                    const completedCooldown = await sleepWithCountdown(delaySeconds, 'Rate-limit protection delay — next batch in');
+                    if (!completedCooldown) return;
+                }
+            }
+        }
+
+        /**
+         * Pauses execution for `seconds` while updating the visible countdown banner.
+         * Resolves to `true` if timer completed, or `false` if interrupted by Pause.
+         */
+        function sleepWithCountdown(seconds, labelPrefix) {
+            return new Promise((resolve) => {
+                let remaining = seconds;
+                els.countdownBanner.classList.remove('hidden');
+                els.countdownBanner.classList.add('flex');
+                els.countdownMessage.querySelector('span:last-child').textContent = labelPrefix;
+                els.countdownTimer.textContent = `${remaining}s`;
+
+                state.activeTimerId = setInterval(() => {
+                    if (!state.isRunning || state.isPaused) {
+                        clearCountdown();
+                        resolve(false);
+                        return;
+                    }
+
+                    remaining -= 1;
+                    if (remaining <= 0) {
+                        clearCountdown();
+                        resolve(true);
+                    } else {
+                        els.countdownTimer.textContent = `${remaining}s`;
+                    }
+                }, 1000);
+            });
+        }
+
+        function clearCountdown() {
+            if (state.activeTimerId) {
+                clearInterval(state.activeTimerId);
+                state.activeTimerId = null;
+            }
+            els.countdownBanner.classList.add('hidden');
+            els.countdownBanner.classList.remove('flex');
+        }
+
+        // ============================================================================
+        // 4. SRT EXPORT (WITH PARTIAL DOWNLOAD SAFETY & UTF-8 BOM)
+        // ============================================================================
+
+        function exportTranslatedSrt() {
+            if (state.blocks.length === 0) return;
+
+            let translatedCount = 0;
+            const outputBlocks = state.blocks.map(block => {
+                const hasTranslation = block.translatedText && block.translatedText.trim().length > 0;
+                if (hasTranslation) translatedCount++;
+
+                // Fall back to original text if a block hasn't been translated yet (Partial Download Safety)
+                const finalBody = hasTranslation ? block.translatedText.trim() : block.originalText;
+                return `${block.indexStr}\n${block.timestamp}\n${finalBody}`;
+            });
+
+            const srtOutput = outputBlocks.join('\n\n') + '\n';
+            const useBom = els.utf8BomCheckbox.checked;
+            const payload = useBom ? '\uFEFF' + srtOutput : srtOutput;
+
+            const blob = new Blob([payload], { type: 'application/x-subrip;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            const baseName = state.fileName.replace(/\.srt$/i, '') || 'subtitles';
+            const downloadName = `${baseName}.my.srt`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = downloadName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            if (translatedCount < state.blocks.length) {
+                logMessage('WARNING', `Exported partial translation "${downloadName}" (${translatedCount}/${state.blocks.length} blocks translated; remaining blocks kept in original text).`);
+            } else {
+                logMessage('SUCCESS', `Exported complete Burmese subtitle file "${downloadName}" (${translatedCount} blocks).`);
+            }
+        }
+
+        // ============================================================================
+        // 5. UI RENDERING & DIAGNOSTIC LOGGING
+        // ============================================================================
+
+        function updateFileStatsUI() {
+            if (state.blocks.length === 0) return;
+            const batchSize = Math.max(1, parseInt(els.batchSizeInput.value, 10) || 40);
+            const totalBatches = Math.ceil(state.blocks.length / batchSize);
+            els.blockCountDisplay.textContent = `${state.blocks.length} subtitle blocks detected`;
+            els.batchCountBadge.textContent = `${totalBatches} ${totalBatches === 1 ? 'Batch' : 'Batches'}`;
+        }
+
+        function updateProgressUI() {
+            const total = state.blocks.length;
+            const done = state.blocks.filter(b => b.status === 'done').length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            els.progressPercentLabel.textContent = `${pct}% (${done} / ${total})`;
+            els.progressBarFill.style.width = `${pct}%`;
+        }
+
+        function updateControlButtonsState() {
+            const hasBlocks = state.blocks.length > 0;
+            const doneCount = state.blocks.filter(b => b.status === 'done').length;
+
+            if (state.isRunning) {
+                els.startBtn.disabled = true;
+                els.pauseResumeBtn.disabled = false;
+                els.pauseResumeBtnText.textContent = 'Pause';
+                els.pauseResumeBtn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
+            } else if (state.isPaused) {
+                els.startBtn.disabled = false;
+                els.startBtnText.textContent = 'Restart All';
+                els.pauseResumeBtn.disabled = false;
+                els.pauseResumeBtnText.textContent = 'Resume';
+                els.pauseResumeBtn.classList.add('bg-amber-500', 'text-white', 'border-amber-500');
+            } else {
+                els.startBtn.disabled = !hasBlocks;
+                els.startBtnText.textContent = (hasBlocks && doneCount === state.blocks.length) ? 'Translate Again' : 'Start Translation';
+                els.pauseResumeBtn.disabled = true;
+                els.pauseResumeBtnText.textContent = 'Pause';
+                els.pauseResumeBtn.classList.remove('bg-amber-500', 'text-white', 'border-amber-500');
+            }
+        }
+
+        /**
+         * Renders the side-by-side preview table with inline editing support.
+         */
+        function renderSubtitleTable() {
+            const filter = els.filterSelect.value;
+            const filteredBlocks = state.blocks.filter(b => {
+                if (filter === 'translated') return b.status === 'done';
+                if (filter === 'pending') return b.status !== 'done';
+                return true;
+            });
+
+            if (filteredBlocks.length === 0) {
+                els.subtitleTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="py-12 text-center text-slate-400 dark:text-slate-500">
+                            No subtitle blocks match the current filter.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            filteredBlocks.forEach(block => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors align-top';
+
+                if (block.status === 'translating') {
+                    tr.classList.add('bg-indigo-50/40', 'dark:bg-indigo-950/25');
+                } else if (block.status === 'error') {
+                    tr.classList.add('bg-red-50/40', 'dark:bg-red-950/25');
+                }
+
+                // Column 1: Index & Timestamp
+                const tdMeta = document.createElement('td');
+                tdMeta.className = 'py-3 px-4 font-mono text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap select-none';
+                
+                let statusDot = '<span class="inline-block w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mr-1.5" title="Pending"></span>';
+                if (block.status === 'done') {
+                    statusDot = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5" title="Translated"></span>';
+                } else if (block.status === 'translating') {
+                    statusDot = '<span class="inline-block w-2 h-2 rounded-full bg-indigo-500 animate-ping mr-1.5" title="Translating"></span>';
+                } else if (block.status === 'error') {
+                    statusDot = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1.5" title="Error"></span>';
+                }
+
+                tdMeta.innerHTML = `
+                    <div class="font-bold text-slate-700 dark:text-slate-200 flex items-center">${statusDot}#${escapeHtml(block.indexStr)}</div>
+                    <div class="text-[11px] mt-1 opacity-80">${escapeHtml(block.timestamp.replace(' --> ', '<br>→ '))}</div>
+                `;
+
+                // Column 2: Original Subtitle Text
+                const tdOrig = document.createElement('td');
+                tdOrig.className = 'py-3 px-4 text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words leading-relaxed';
+                tdOrig.textContent = block.originalText;
+
+                // Column 3: Editable Burmese Translation
+                const tdTrans = document.createElement('td');
+                tdTrans.className = 'py-2.5 px-4';
+
+                const textarea = document.createElement('textarea');
+                textarea.rows = Math.max(2, block.originalText.split('\n').length);
+                textarea.value = block.translatedText;
+                textarea.placeholder = block.status === 'translating' ? 'Translating into Burmese...' : 'Pending translation (or type manually)...';
+                textarea.className = 'w-full px-3 py-2 rounded-xl border border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 bg-slate-100/70 dark:bg-slate-800/60 text-sm myanmar-text text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition resize-y';
+
+                // Inline manual edit listener
+                textarea.addEventListener('input', (e) => {
+                    block.translatedText = e.target.value;
+                    if (e.target.value.trim().length > 0 && block.status !== 'done') {
+                        block.status = 'done';
+                        updateProgressUI();
+                    }
+                });
+
+                tdTrans.appendChild(textarea);
+                tr.appendChild(tdMeta);
+                tr.appendChild(tdOrig);
+                tr.appendChild(tdTrans);
+                fragment.appendChild(tr);
+            });
+
+            els.subtitleTableBody.innerHTML = '';
+            els.subtitleTableBody.appendChild(fragment);
+        }
+
+        /**
+         * Appends a color-coded diagnostic log entry to the console panel.
+         */
+        function logMessage(level, message) {
+            const now = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const badgeStyles = {
+                INFO: 'bg-sky-900/80 text-sky-300 border-sky-700',
+                SUCCESS: 'bg-emerald-900/80 text-emerald-300 border-emerald-700',
+                WARNING: 'bg-amber-900/80 text-amber-300 border-amber-700',
+                ERROR: 'bg-red-900/80 text-red-300 border-red-700'
+            };
+
+            const row = document.createElement('div');
+            row.className = 'flex items-start gap-2 leading-relaxed';
+            row.innerHTML = `
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border shrink-0 ${badgeStyles[level] || badgeStyles.INFO}">${level}</span>
+                <span class="text-slate-500 shrink-0">[${now}]</span>
+                <span class="${level === 'ERROR' ? 'text-red-300' : level === 'SUCCESS' ? 'text-emerald-200' : 'text-slate-200'} break-words">${escapeHtml(message)}</span>
+            `;
+
+            els.logConsole.appendChild(row);
+            els.logConsole.scrollTop = els.logConsole.scrollHeight;
+        }
+
+        /**
+         * Displays the prominent error alert banner at the top of the interface.
+         */
+        function showBannerError(title, plainText, rawDetails) {
+            els.bannerErrorTitle.textContent = title;
+            els.bannerErrorPlain.textContent = plainText;
+            if (rawDetails) {
+                els.bannerErrorRaw.textContent = rawDetails;
+                els.bannerErrorRaw.classList.remove('hidden');
+            } else {
+                els.bannerErrorRaw.classList.add('hidden');
+            }
+            els.criticalErrorBanner.classList.remove('hidden');
+            els.criticalErrorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Boot application
+        init();
+    </script>
+</body>
+</html>
